@@ -31,8 +31,6 @@ EcalDQMonitorClient::EcalDQMonitorClient(edm::ParameterSet const& _ps) :
   booked_(false),
   statusManager_()
 {
-  std::cout << "EcalDQMonitorClient::Ctor" << std::endl;
-  
   executeOnWorkers_([this](ecaldqm::DQWorker* worker){
       ecaldqm::DQWorkerClient* client(dynamic_cast<ecaldqm::DQWorkerClient*>(worker));
       if(!client)
@@ -49,7 +47,6 @@ EcalDQMonitorClient::EcalDQMonitorClient(edm::ParameterSet const& _ps) :
 
 EcalDQMonitorClient::~EcalDQMonitorClient()
 {
-  std::cout << "EcalDQMonitorClient::Dtor" << std::endl;
 }
 
 /*static*/
@@ -73,8 +70,6 @@ EcalDQMonitorClient::fillDescriptions(edm::ConfigurationDescriptions &_descs)
 void
 EcalDQMonitorClient::beginRun(edm::Run const& _run, edm::EventSetup const& _es)
 {
-  std::cout << "EcalDQMonitorClient::beginRun" << std::endl;
-  
   ecaldqmGetSetupObjects(_es);
 
   if(_es.find(edm::eventsetup::EventSetupRecordKey::makeKey<EcalDQMChannelStatusRcd>()) && _es.find(edm::eventsetup::EventSetupRecordKey::makeKey<EcalDQMTowerStatusRcd>())){
@@ -93,16 +88,12 @@ EcalDQMonitorClient::beginRun(edm::Run const& _run, edm::EventSetup const& _es)
 void
 EcalDQMonitorClient::endRun(edm::Run const& _run, edm::EventSetup const& _es)
 {
-  std::cout << "EcalDQMonitorClient::endRun" << std::endl;
-  
   ecaldqmEndRun(_run, _es);
 }
 
 void
 EcalDQMonitorClient::dqmEndLuminosityBlock(DQMStore::IBooker& _ibooker, DQMStore::IGetter& _igetter, edm::LuminosityBlock const& _lumi, edm::EventSetup const& _es)
 {
-  std::cout << "EcalDQMonitorClient::dqmEndLumi" << std::endl;
-  
   if(!booked_){
     ecaldqmBookHistograms(_ibooker);
     booked_ = true;
@@ -116,8 +107,6 @@ EcalDQMonitorClient::dqmEndLuminosityBlock(DQMStore::IBooker& _ibooker, DQMStore
 void
 EcalDQMonitorClient::dqmEndJob(DQMStore::IBooker& _ibooker, DQMStore::IGetter& _igetter)
 {
-  std::cout << "EcalDQMonitorClient::dqmEndJob" << std::endl;
-  
   if(!booked_){
     ecaldqmBookHistograms(_ibooker);
     booked_ = true;
