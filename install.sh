@@ -30,6 +30,8 @@ function diff-cp()
     done
 }
 
+REVERSE=false
+
 while [ $# -gt 0 ]; do
     case $1 in
         -R)
