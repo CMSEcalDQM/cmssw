@@ -2,6 +2,8 @@
 #define DBWriterWorkers_H
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+
 #include "DQM/EcalCommon/interface/MESet.h"
 
 #include "OnlineDB/EcalCondDB/interface/MonRunDat.h"
@@ -17,6 +19,8 @@ namespace ecaldqm {
   public:
     DBWriterWorker(std::string const&, edm::ParameterSet const&);
     virtual ~DBWriterWorker() {}
+
+    static void fillDescriptions(edm::ParameterSetDescription&);
 
     void retrieveSource();
     virtual bool run(EcalCondDBInterface*, MonRunIOV&) = 0;

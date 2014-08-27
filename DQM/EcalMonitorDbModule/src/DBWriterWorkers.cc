@@ -90,6 +90,19 @@ namespace ecaldqm {
     }
   }
 
+  /*static*/
+  void
+  DBWriterWorker::fillDescriptions(edm::ParameterSetDescription& _desc)
+  {
+    _desc.addUntracked<std::vector<std::string> >("runTypes", std::vector<std::string>());
+
+    edm::ParameterSetDescription sourceParameters;
+    edm::ParameterSetDescription sourceNodeParameters;
+    fillMESetDescriptions(sourceNodeParameters);
+    sourceParameters.addNode(edm::ParameterWildcard<edm::ParameterSetDescription>("*", edm::RequireZeroOrMore, false, sourceNodeParameters));
+    _desc.addUntracked("source", sourceParameters);
+  }
+
   void
   DBWriterWorker::retrieveSource()
   {

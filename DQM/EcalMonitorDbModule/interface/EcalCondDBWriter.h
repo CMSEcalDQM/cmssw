@@ -1,17 +1,19 @@
 #ifndef EcalCondDBWriter_H
 #define EcalCondDBWriter_H
 
-#include "DBWriterWorkers.h"
-
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "OnlineDB/EcalCondDB/interface/EcalCondDBInterface.h"
+
+#include "DBWriterWorkers.h"
+
+class EcalCondDBInterface;
 
 class EcalCondDBWriter : public edm::EDAnalyzer {
  public:
   EcalCondDBWriter(edm::ParameterSet const&);
   ~EcalCondDBWriter();
+
+  static void fillDescriptions(edm::ConfigurationDescriptions&);
 
  private:
   void analyze(edm::Event const&, edm::EventSetup const&) {}

@@ -7,6 +7,12 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
+#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
+
+#include "OnlineDB/EcalCondDB/interface/EcalCondDBInterface.h"
+
 #include "TObjArray.h"
 #include "TPRegexp.h"
 #include "TString.h"
@@ -99,6 +105,37 @@ EcalCondDBWriter::~EcalCondDBWriter()
 
   for(unsigned iC(0); iC < nTasks; ++iC)
     delete workers_[iC];
+}
+
+/*static*/
+void
+EcalCondDBWriter::fillDescriptions(edm::ConfigurationDescriptions& _descs)
+{
+  edm::ParameterSetDescription desc;
+
+  edm::ParameterSetDescription workerParameters;
+  ecaldqm::DBWriterWorker::fillDescriptions(workerParameters);
+  edm::ParameterSetDescription allWorkers;
+  allWorkers.addNode(edm::ParameterWildcard<edm::ParameterSetDescription>("*", edm::RequireZeroOrMore, false, workerParameters));
+  allWorkers.addUntracked<std::vector<int> >("laserWavelengths");
+  allWorkers.addUntracked<std::vector<int> >("ledWavelengths");
+  allWorkers.addUntracked<std::vector<int> >("MGPAGains");
+  allWorkers.addUntracked<std::vector<int> >("MGPAGainsPN");
+  desc.addUntracked("workerParams", allWorkers);
+
+  desc.addUntracked<std::string>("location");
+  desc.addUntracked<std::string>("runType");
+  desc.addUntracked<std::string>("runGeneralTag");
+  desc.addUntracked<std::string>("monRunGeneralTag");
+  desc.addUntracked<std::vector<std::string> >("inputRootFiles");
+  desc.addUntracked<int>("verbosity");
+  desc.addUntracked<std::string>("DBName");
+  desc.addUntracked<std::string>("hostName");
+  desc.addUntracked<int>("hostPort");
+  desc.addUntracked<std::string>("userName");
+  desc.addUntracked<std::string>("password");
+
+  _descs.addDefault(desc);
 }
 
 void
