@@ -102,7 +102,7 @@ namespace ecaldqm
     
     std::string failedPath;
     for(MESetCollection::iterator sItr(sources_.begin()); sItr != sources_.end(); ++sItr){
-      if(_type == kLumi && !sItr->second->getLumiFlag()) continue;
+      if(!onlineMode_ && _type == kLumi && !sItr->second->getLumiFlag()) continue;
       if(verbosity_ > 1) edm::LogInfo("EcalDQM") << name_ << ": Retrieving source " << sItr->first;
       if(!sItr->second->retrieve(_igetter, &failedPath)){
         ready = 0;
