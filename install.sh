@@ -5,23 +5,28 @@ function diff-cp()
     local SUBDIR=$1
     local SOURCE=$2
     local DEST=$3
-    local FORCE=$4
+    local FLAG=$4
 
-    local COPIED=""
+    local FILES=""
 
     for OBJ in $(ls $SOURCE/$SUBDIR); do
         [[ $OBJ =~ \.pyc$ || $OBJ =~ ~$ || $OBJ = "__init__.py" ]] && continue
 
         if [ -d $SOURCE/$SUBDIR/$OBJ ]; then
-            COPIED=$COPIED$(diff-cp $OBJ $SOURCE/$SUBDIR $DEST/$SUBDIR $FORCE)
+            FILES=$FILES$(diff-cp $OBJ $SOURCE/$SUBDIR $DEST/$SUBDIR $FLAG)
         elif ! (diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ > /dev/null 2>&1); then
-            if [ "$FORCE" != "-f" ]; then
+            if [ "$FLAG" = "-t" ]; then
+                FILES=$FILES$'\n'$SOURCE/$SUBDIR/$OBJ
+            elif [ "$FLAG" = "-f" ]; then
+                cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
+                FILES=$FILES$'\n'$SOURCE/$SUBDIR/$OBJ
+            else
                 echo "copy $SOURCE/$SUBDIR/$OBJ ? y/d/N:"
                 while read RESPONSE; do
                     case $RESPONSE in
                         y)
                             cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
-                            COPIED=$COPIED$'\n'$SOURCE/$SUBDIR/$OBJ
+                            FILES=$FILES$'\n'$SOURCE/$SUBDIR/$OBJ
                             break
                             ;;
                         d)
@@ -36,22 +41,24 @@ function diff-cp()
                             ;;
                     esac
                 done
-            else
-                cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
-                COPIED=$COPIED$'\n'$SOURCE/$SUBDIR/$OBJ
             fi
         fi
     done
 
-    echo "$COPIED"
+    echo "$FILES"
 }
 
 REVERSE=false
+TEST=false
 
 while [ $# -gt 0 ]; do
     case $1 in
         -R)
             REVERSE=true
+            shift
+            ;;
+        -t)
+            TEST=true
             shift
             ;;
         *)
@@ -99,13 +106,21 @@ for DIR in $DIRS; do
     fi
 done
 
-COPIED=""
+FILES=""
 for DIR in $DIRS; do
+    if $TEST; then
+        FLAG="-t"
+    fi
     if $REVERSE; then
-        COPIED=$COPIED$(diff-cp $DIR $CMSSW_BASE/src $INSTALLDIR)
+        FILES=$FILES$(diff-cp $DIR $CMSSW_BASE/src $INSTALLDIR $FLAG)
     else
-        COPIED=$COPIED$(diff-cp $DIR $CMSSW_BASE/src $INSTALLDIR -f)
+        if $TEST; then
+            FLAG="-t"
+        else
+            FLAG="-f"
+        fi
+        FILES=$FILES$(diff-cp $DIR $INSTALLDIR $CMSSW_BASE/src $FLAG)
     fi
 done
 
-echo "Copied: $COPIED"
+echo "install: $FILES"
