@@ -7,13 +7,11 @@ function diff-cp()
     local DEST=$3
     local FLAG=$4
 
-    local FILES=""
-
     for OBJ in $(ls $SOURCE/$SUBDIR); do
         [[ $OBJ =~ \.pyc$ || $OBJ =~ ~$ || $OBJ = "__init__.py" ]] && continue
 
         if [ -d $SOURCE/$SUBDIR/$OBJ ]; then
-            FILES=$FILES$(diff-cp $OBJ $SOURCE/$SUBDIR $DEST/$SUBDIR $FLAG)
+            diff-cp $OBJ $SOURCE/$SUBDIR $DEST/$SUBDIR $FLAG
         elif ! (diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ > /dev/null 2>&1); then
             if [ "$FLAG" = "-t" ]; then
                 FILES=$FILES$'\n'$SOURCE/$SUBDIR/$OBJ
@@ -44,8 +42,6 @@ function diff-cp()
             fi
         fi
     done
-
-    echo "$FILES"
 }
 
 REVERSE=false
@@ -112,15 +108,16 @@ for DIR in $DIRS; do
         FLAG="-t"
     fi
     if $REVERSE; then
-        FILES=$FILES$(diff-cp $DIR $CMSSW_BASE/src $INSTALLDIR $FLAG)
+        diff-cp $DIR $CMSSW_BASE/src $INSTALLDIR $FLAG
     else
         if $TEST; then
             FLAG="-t"
         else
             FLAG="-f"
         fi
-        FILES=$FILES$(diff-cp $DIR $INSTALLDIR $CMSSW_BASE/src $FLAG)
+        diff-cp $DIR $INSTALLDIR $CMSSW_BASE/src $FLAG
     fi
 done
 
 echo "install: $FILES"
+
