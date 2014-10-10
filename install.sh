@@ -14,17 +14,22 @@ function diff-cp()
         elif ! (diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ > /dev/null 2>&1); then
             echo "copy $SOURCE/$SUBDIR/$OBJ ? y/d/N:"
             while read RESPONSE; do
-                if [ "$RESPONSE" = "y" ]; then
-                    cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
-                    break
-                elif [ "$RESPONSE" = "d" ]; then
-                    diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
-                    echo "y/d/N:"
-                elif [ "$RESPONSE" = "N" ]; then
-                    break
-                else
-                    echo "Answer in y/d/N."
-                fi
+                case $RESPONSE in
+                    y)
+                        cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
+                        break
+                        ;;
+                    d)
+                        diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
+                        echo "y/d/N:"
+                        ;;
+                    N)
+                        break
+                        ;;
+                    *)
+                        echo "Answer in y/d/N."
+                        ;;
+                esac
             done
         fi
     done
@@ -62,8 +67,24 @@ done
 
 for DIR in $DIRS; do
     if [ ! -d $CMSSW_BASE/src/$DIR ]; then
-        echo "$CMSSW_BASE/src/$DIR does not exist. Check out the package with git-cms-addpkg first."
-        exit 1
+        echo "$CMSSW_BASE/src/$DIR does not exist. Check out package? [y/N]"
+        while read RESPONSE; do
+            case $RESPONSE in
+                y)
+                    CWD=$PWD
+                    cd $CMSSW_BASE/src
+                    git cms-addpkg $DIR
+                    cd $CWD
+                    break
+                    ;;
+                N)
+                    break
+                    ;;
+                *)
+                    echo "Please answer in y/N."
+                    ;;
+            esac
+        done
     fi
 done
 
