@@ -1,34 +1,54 @@
 #!/bin/bash
 
-function diff-cp()
+function synchdir()
 {
     local SUBDIR=$1
     local SOURCE=$2
     local DEST=$3
     local FLAG=$4
 
+    local VERSIONED=
+    for OBJ in $(ls $SOURCE/$SUBDIR); do
+        [[ $OBJ =~ \.pyc$ || $OBJ =~ ~$ || $OBJ = "__init__.py" ]] && continue
+        [ -f $SOURCE/$SUBDIR/$OBJ ] || continue
+        [[ $OBJ =~ \.CMSSW_[0-9]+_[0-9]+_X$ ]] || continue
+        SERIES=$(sed 's/.*[.]\(CMSSW_[0-9]*_[0-9]*_\)X$/\1/' <<< $OBJ)
+        [[ $CMSSW_VERSION =~ $SERIES ]] || continue
+        FILENAME=$(sed 's/\(.*\)[.]CMSSW_[0-9]*_[0-9]*_X$/\1/' <<< $OBJ)
+        VERSIONED="$VERSIONED $SOURCE/$SUBDIR/$FILENAME"
+    done                
+
     for OBJ in $(ls $SOURCE/$SUBDIR); do
         [[ $OBJ =~ \.pyc$ || $OBJ =~ ~$ || $OBJ = "__init__.py" ]] && continue
 
         if [ -d $SOURCE/$SUBDIR/$OBJ ]; then
-            diff-cp $OBJ $SOURCE/$SUBDIR $DEST/$SUBDIR $FLAG
-        elif ! (diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ > /dev/null 2>&1); then
+            synchdir $OBJ $SOURCE/$SUBDIR $DEST/$SUBDIR $FLAG
+        else
+            [[ $OBJ =~ \.CMSSW_[0-9]+_[0-9]+_X$ ]] && continue
+            
+            FILENAME=$OBJ
+            if (echo $VERSIONED | grep $SOURCE/$SUBDIR/$FILENAME > /dev/null); then
+                OBJ=$FILENAME.$(sed 's/^\(CMSSW_[0-9]*_[0-9]*_\).*/\1X/' <<< $CMSSW_VERSION)
+            fi
+            
+            diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$FILENAME > /dev/null 2>&1 && continue
+            
             if [ "$FLAG" = "-t" ]; then
-                FILES=$FILES$'\n'$SOURCE/$SUBDIR/$OBJ
+                FILES=$FILES$'\n'"diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$FILENAME"
             elif [ "$FLAG" = "-f" ]; then
-                cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
-                FILES=$FILES$'\n'$SOURCE/$SUBDIR/$OBJ
+                cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$FILENAME
+                FILES=$FILES$'\n'"cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$FILENAME"
             else
                 echo "copy $SOURCE/$SUBDIR/$OBJ ? y/d/N:"
                 while read RESPONSE; do
                     case $RESPONSE in
                         y)
-                            cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
-                            FILES=$FILES$'\n'$SOURCE/$SUBDIR/$OBJ
+                            cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$FILENAME
+                            FILES=$FILES$'\n'"cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$FILENAME"
                             break
                             ;;
                         d)
-                            diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
+                            diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$FILENAME
                             echo "y/d/N:"
                             ;;
                         N)
@@ -40,6 +60,36 @@ function diff-cp()
                     esac
                 done
             fi
+        fi
+    done
+
+    for OBJ in $(ls $DEST/$SUBDIR); do
+        [[ $OBJ =~ \.pyc$ || $OBJ =~ ~$ || $OBJ = "__init__.py" ]] && continue
+        
+        [ -e $SOURCE/$SUBDIR/$OBJ ] && continue
+
+        if [ "$FLAG" = "-t" ]; then
+            FILES=$FILES$'\n'"rm $DEST/$SUBDIR/$OBJ"
+        elif [ "$FLAG" = "-f" ]; then
+            rm -rf $DEST/$SUBDIR/$OBJ
+            FILES=$FILES$'\n'"rm $DEST/$SUBDIR/$OBJ"
+        else
+            echo "remove $DEST/$SUBDIR/$OBJ ? y/N:"
+            while read RESPONSE; do
+                case $RESPONSE in
+                    y)
+                        rm $DEST/$SUBDIR/$OBJ
+                        FILES=$FILES$'\n'"rm $DEST/$SUBDIR/$OBJ"
+                        break
+                        ;;
+                    N)
+                        break
+                        ;;
+                    *)
+                        echo "Answer in y/N."
+                        ;;
+                esac
+            done
         fi
     done
 }
@@ -108,14 +158,14 @@ for DIR in $DIRS; do
         FLAG="-t"
     fi
     if $REVERSE; then
-        diff-cp $DIR $CMSSW_BASE/src $INSTALLDIR $FLAG
+        synchdir $DIR $CMSSW_BASE/src $INSTALLDIR $FLAG
     else
         if $TEST; then
             FLAG="-t"
         else
             FLAG="-f"
         fi
-        diff-cp $DIR $INSTALLDIR $CMSSW_BASE/src $FLAG
+        synchdir $DIR $INSTALLDIR $CMSSW_BASE/src $FLAG
     fi
 done
 
