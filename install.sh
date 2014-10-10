@@ -5,34 +5,45 @@ function diff-cp()
     local SUBDIR=$1
     local SOURCE=$2
     local DEST=$3
+    local FORCE=$4
+
+    local COPIED=""
 
     for OBJ in $(ls $SOURCE/$SUBDIR); do
         [[ $OBJ =~ \.pyc$ || $OBJ =~ ~$ || $OBJ = "__init__.py" ]] && continue
 
         if [ -d $SOURCE/$SUBDIR/$OBJ ]; then
-            diff-cp $OBJ $SOURCE/$SUBDIR $DEST/$SUBDIR
+            COPIED=$COPIED$(diff-cp $OBJ $SOURCE/$SUBDIR $DEST/$SUBDIR $FORCE)
         elif ! (diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ > /dev/null 2>&1); then
-            echo "copy $SOURCE/$SUBDIR/$OBJ ? y/d/N:"
-            while read RESPONSE; do
-                case $RESPONSE in
-                    y)
-                        cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
-                        break
-                        ;;
-                    d)
-                        diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
-                        echo "y/d/N:"
-                        ;;
-                    N)
-                        break
-                        ;;
-                    *)
-                        echo "Answer in y/d/N."
-                        ;;
-                esac
-            done
+            if [ "$FORCE" != "-f" ]; then
+                echo "copy $SOURCE/$SUBDIR/$OBJ ? y/d/N:"
+                while read RESPONSE; do
+                    case $RESPONSE in
+                        y)
+                            cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
+                            COPIED=$COPIED$'\n'$SOURCE/$SUBDIR/$OBJ
+                            break
+                            ;;
+                        d)
+                            diff $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
+                            echo "y/d/N:"
+                            ;;
+                        N)
+                            break
+                            ;;
+                        *)
+                            echo "Answer in y/d/N."
+                            ;;
+                    esac
+                done
+            else
+                cp $SOURCE/$SUBDIR/$OBJ $DEST/$SUBDIR/$OBJ
+                COPIED=$COPIED$'\n'$SOURCE/$SUBDIR/$OBJ
+            fi
         fi
     done
+
+    echo "$COPIED"
 }
 
 REVERSE=false
@@ -88,12 +99,13 @@ for DIR in $DIRS; do
     fi
 done
 
+COPIED=""
 for DIR in $DIRS; do
     if $REVERSE; then
-        diff-cp $DIR $CMSSW_BASE/src $INSTALLDIR
+        COPIED=$COPIED$(diff-cp $DIR $CMSSW_BASE/src $INSTALLDIR)
     else
-        echo $DIR
-        rm -rf $CMSSW_BASE/src/$DIR/*
-        cp -r $INSTALLDIR/$DIR/* $CMSSW_BASE/src/$DIR/
+        COPIED=$COPIED$(diff-cp $DIR $CMSSW_BASE/src $INSTALLDIR -f)
     fi
 done
+
+echo "Copied: $COPIED"
