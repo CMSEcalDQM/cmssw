@@ -36,7 +36,7 @@ class EcalMonitorPrescaler: public edm::EDFilter {
 
   edm::EDGetTokenT<EcalRawDataCollection> EcalRawDataCollection_;
 
-  std::pair<unsigned, unsigned> prescalers_[nPrescalers];
+  std::pair<unsigned long long, unsigned> prescalers_[nPrescalers];
 };
 
 #endif // EcalMonitorPrescaler_H
