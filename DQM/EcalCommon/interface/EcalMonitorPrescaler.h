@@ -6,6 +6,10 @@
 
 #include <utility>
 
+namespace edm {
+  class ConfigurationDescriptions;
+}
+
 class EcalMonitorPrescaler: public edm::EDFilter {
  public:
   EcalMonitorPrescaler(edm::ParameterSet const&);
@@ -13,6 +17,8 @@ class EcalMonitorPrescaler: public edm::EDFilter {
 
   void beginRun(edm::Run const&, edm::EventSetup const&) override;
   bool filter(edm::Event&, edm::EventSetup const&) override;
+
+  static void fillDescriptions(edm::ConfigurationDescriptions&);
 
  private:
   enum Prescalers {

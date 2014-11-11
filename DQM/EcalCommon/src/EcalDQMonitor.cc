@@ -96,6 +96,12 @@ namespace ecaldqm
     }
   }
 
+  bool
+  EcalDQMonitor::ecaldqmCheckSetupObjects() const
+  {
+    return checkElectronicsMap(false) && checkTrigTowerMap(false) && checkGeometry(false) && checkTopology(false);
+  }
+
   void
   EcalDQMonitor::ecaldqmBeginRun(edm::Run const& _run, edm::EventSetup const& _es)
   {

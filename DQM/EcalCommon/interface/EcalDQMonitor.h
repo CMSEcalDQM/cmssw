@@ -28,6 +28,7 @@ namespace ecaldqm
 
   protected:
     void ecaldqmGetSetupObjects(edm::EventSetup const&);
+    bool ecaldqmCheckSetupObjects() const;
     void ecaldqmBeginRun(edm::Run const&, edm::EventSetup const&);
     void ecaldqmEndRun(edm::Run const&, edm::EventSetup const&);
     void ecaldqmBeginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);

@@ -50,7 +50,7 @@ EcalDQMonitorClient::~EcalDQMonitorClient()
 
 /*static*/
 void
-EcalDQMonitorClient::fillDescriptions(edm::ConfigurationDescriptions &_descs)
+EcalDQMonitorClient::fillDescriptions(edm::ConfigurationDescriptions& _descs)
 {
   edm::ParameterSetDescription desc;
   ecaldqm::EcalDQMonitor::fillDescriptions(desc);
@@ -107,6 +107,11 @@ EcalDQMonitorClient::dqmEndLuminosityBlock(DQMStore::IBooker& _ibooker, DQMStore
 void
 EcalDQMonitorClient::dqmEndJob(DQMStore::IBooker& _ibooker, DQMStore::IGetter& _igetter)
 {
+  if(!ecaldqmCheckSetupObjects()){
+    edm::LogWarning("EcalDQM") << "Ending job before ECAL setup objects were initialized. Cannot run workers.";
+    return;
+  }
+
   executeOnWorkers_([&_ibooker](ecaldqm::DQWorker* worker){
       worker->bookMEs(_ibooker); // worker returns if already booked
     }, "bookMEs", "Booking MEs");
