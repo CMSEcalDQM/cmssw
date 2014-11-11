@@ -108,7 +108,7 @@ namespace ecaldqm
 
       int integrity(iItr->getBinContent());
 
-      if(integrity == kUnknown){
+      if(integrity == kUnknown || integrity == kMUnknown){
         qItr->setBinContent(integrity);
         continue;
       }
