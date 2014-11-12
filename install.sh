@@ -64,8 +64,8 @@ function synchdir()
     done
 
     for OBJ in $(ls $DEST/$SUBDIR); do
-        [[ $OBJ =~ \.pyc$ || $OBJ =~ ~$ || $OBJ = "__init__.py" ]] && continue
-        
+        [[ $OBJ =~ \.pyc$ || $OBJ =~ ~$ || $OBJ = "__init__.py" || $OBJ =~ \.CMSSW_[0-9]+_[0-9]+_X$ ]] && continue
+
         [ -e $SOURCE/$SUBDIR/$OBJ ] && continue
 
         if [ "$FLAG" = "-t" ]; then

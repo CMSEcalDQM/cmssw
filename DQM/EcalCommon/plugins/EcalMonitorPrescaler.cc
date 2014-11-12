@@ -51,32 +51,29 @@ EcalMonitorPrescaler::EcalMonitorPrescaler(edm::ParameterSet const& _ps):
   prescalers_[kPedestal].second = _ps.getUntrackedParameter<unsigned>("pedestal");
 
   // Backward compatibility
-  unsigned factor(_ps.getUntrackedParameter<int>("occupancyPrescaleFactor"));
-  if(factor != 0) prescalers_[kPhysics].second = std::min(prescalers_[kPhysics].second, factor);
-  factor = _ps.getUntrackedParameter<int>("integrityPrescaleFactor");
-  if(factor != 0) prescalers_[kPhysics].second = std::min(prescalers_[kPhysics].second, factor);
-  factor = _ps.getUntrackedParameter<int>("cosmicPrescaleFactor");
-  if(factor != 0) prescalers_[kCosmics].second = std::min(prescalers_[kCosmics].second, factor);
-  factor = _ps.getUntrackedParameter<int>("laserPrescaleFactor");
-  if(factor != 0) prescalers_[kLaser].second = std::min(prescalers_[kLaser].second, factor);
-  factor = _ps.getUntrackedParameter<int>("ledPrescaleFactor");
-  if(factor != 0) prescalers_[kLed].second = std::min(prescalers_[kLed].second, factor);
-  factor = _ps.getUntrackedParameter<int>("pedestalPrescaleFactor");
-  if(factor != 0) prescalers_[kPedestal].second = std::min(prescalers_[kPedestal].second, factor);
-  factor = _ps.getUntrackedParameter<int>("pedestalonlinePrescaleFactor");
-  if(factor != 0) prescalers_[kPedestal].second = std::min(prescalers_[kPedestal].second, factor);
-  factor = _ps.getUntrackedParameter<int>("testpulsePrescaleFactor");
-  if(factor != 0) prescalers_[kTestPulse].second = std::min(prescalers_[kTestPulse].second, factor);
-  factor = _ps.getUntrackedParameter<int>("pedestaloffsetPrescaleFactor");
-  if(factor != 0) prescalers_[kPedestal].second = std::min(prescalers_[kPedestal].second, factor);
-  factor = _ps.getUntrackedParameter<int>("triggertowerPrescaleFactor");
-  if(factor != 0) prescalers_[kPhysics].second = std::min(prescalers_[kPhysics].second, factor);
-  factor = _ps.getUntrackedParameter<int>("timingPrescaleFactor");
-  if(factor != 0) prescalers_[kPhysics].second = std::min(prescalers_[kPhysics].second, factor);
-  factor = _ps.getUntrackedParameter<int>("physicsPrescaleFactor");
-  if(factor != 0) prescalers_[kPhysics].second = std::min(prescalers_[kPhysics].second, factor);
-  factor = _ps.getUntrackedParameter<int>("clusterPrescaleFactor");
-  if(factor != 0) prescalers_[kPhysics].second = std::min(prescalers_[kPhysics].second, factor);
+  typedef std::pair<std::string, Prescalers> Translation;
+  std::pair<std::string, Prescalers> const translations[] = {
+    Translation("occupancy", kPhysics),
+    Translation("integrity", kPhysics),
+    Translation("cosmic", kCosmics),
+    Translation("laser", kLaser),
+    Translation("led", kLed),
+    Translation("pedestal", kPedestal),
+    Translation("pedestalonline", kPedestal),
+    Translation("testpulse", kTestPulse),
+    Translation("pedestaloffset", kPedestal),
+    Translation("triggertower", kPhysics),
+    Translation("timing", kPhysics),
+    Translation("physics", kPhysics),
+    Translation("cluster", kPhysics)
+  };
+
+  for(unsigned iP(0); iP != sizeof(translations) / sizeof(Translation); ++iP){
+    Translation const& trans(translations[iP]);
+    unsigned input(_ps.getUntrackedParameter<int>(trans.first + "PrescaleFactor"));
+    unsigned& factor(prescalers_[trans.second].second);
+    if(factor * input != 0) factor = std::min(factor, input);
+  }
 }
     
 EcalMonitorPrescaler::~EcalMonitorPrescaler()
@@ -91,11 +88,11 @@ EcalMonitorPrescaler::fillDescriptions(edm::ConfigurationDescriptions& _descs)
 
   desc.add<edm::InputTag>("EcalRawDataCollection");
 
-  std::string newPrescalerNames[] = {"physics", "cosmics", "calibration", "laser", "led", "testPulse", "pedestal"};
+  std::string const newPrescalerNames[] = {"physics", "cosmics", "calibration", "laser", "led", "testPulse", "pedestal"};
   for(unsigned iP(0); iP != sizeof(newPrescalerNames) / sizeof(std::string); ++iP)
     desc.addUntracked<unsigned>(newPrescalerNames[iP], 0);
 
-  std::string oldPrescalerNames[] = {"occupancy", "integrity", "cosmic", "laser", "led", "pedestal", "pedestalonline", "testpulse", "pedestaloffset", "triggertower", "timing", "physics", "cluster"};
+  std::string const oldPrescalerNames[] = {"occupancy", "integrity", "cosmic", "laser", "led", "pedestal", "pedestalonline", "testpulse", "pedestaloffset", "triggertower", "timing", "physics", "cluster"};
   for(unsigned iP(0); iP != sizeof(oldPrescalerNames) / sizeof(std::string); ++iP)
     desc.addUntracked<int>(oldPrescalerNames[iP] + "PrescaleFactor", 0)->setComment("Old-style prescale. Use discouraged but is still valid.");
 
