@@ -7,7 +7,7 @@ from DQM.EcalMonitorTasks.LedTask_cfi import ecalLedTask
 from DQM.EcalMonitorTasks.OccupancyTask_cfi import ecalOccupancyTask
 from DQM.EcalMonitorTasks.PedestalTask_cfi import ecalPedestalTask
 from DQM.EcalMonitorTasks.PresampleTask_cfi import ecalPresampleTask
-from DQM.EcalMonitorTasks.PNDiodeTask_cfi import ecalPnDiodeTask
+from DQM.EcalMonitorTasks.PNDiodeTask_cfi import ecalPNDiodeTask
 from DQM.EcalMonitorTasks.RawDataTask_cfi import ecalRawDataTask
 from DQM.EcalMonitorTasks.TestPulseTask_cfi import ecalTestPulseTask
 from DQM.EcalMonitorTasks.TimingTask_cfi import ecalTimingTask
@@ -16,9 +16,11 @@ from DQM.EcalMonitorClient.LaserClient_cfi import ecalLaserClient
 from DQM.EcalMonitorClient.LedClient_cfi import ecalLedClient
 from DQM.EcalMonitorClient.PedestalClient_cfi import ecalPedestalClient
 from DQM.EcalMonitorClient.PresampleClient_cfi import ecalPresampleClient
-from DQM.EcalMonitorClient.PNIntegrityClient_cfi import ecalPnIntegrityClient
+from DQM.EcalMonitorClient.PNIntegrityClient_cfi import ecalPNIntegrityClient
 from DQM.EcalMonitorClient.TestPulseClient_cfi import ecalTestPulseClient
 from DQM.EcalMonitorClient.TimingClient_cfi import ecalTimingClient
+
+from DQM.EcalCommon.CommonParams_cfi import *
 
 energyTask = ecalEnergyTask.MEs
 integrityTask = ecalIntegrityTask.MEs
@@ -27,7 +29,7 @@ ledTask = ecalLedTask.MEs
 occupancyTask = ecalOccupancyTask.MEs
 pedestalTask = ecalPedestalTask.MEs
 presampleTask = ecalPresampleTask.MEs
-pnDiodeTask = ecalPnDiodeTask.MEs
+pnDiodeTask = ecalPNDiodeTask.MEs
 rawDataTask = ecalRawDataTask.MEs
 testPulseTask = ecalTestPulseTask.MEs
 timingTask = ecalTimingTask.MEs
@@ -36,7 +38,7 @@ laserClient = ecalLaserClient.MEs
 ledClient = ecalLedClient.MEs
 pedestalClient = ecalPedestalClient.MEs
 presampleClient = ecalPresampleClient.MEs
-pnIntegrityClient = ecalPnIntegrityClient.MEs
+pnIntegrityClient = ecalPNIntegrityClient.MEs
 testPulseClient = ecalTestPulseClient.MEs
 timingClient = ecalTimingClient.MEs
 
@@ -154,10 +156,10 @@ ecalCondDBWriter = cms.EDAnalyzer("EcalCondDBWriter",
         Summary = cms.untracked.PSet(
             runTypes = cms.untracked.vstring(cosmic, beam, laser, testpulse, pedestal, pedestalOffset, led, physics, halo)
         ),
-        laserWavelengths = cms.untracked.vint32(1, 2, 3, 4),
-        ledWavelengths = cms.untracked.vint32(1, 2),
-        MGPAGains = cms.untracked.vint32(1, 6, 12),
-        MGPAGainsPN = cms.untracked.vint32(1, 16)
+        laserWavelengths = ecaldqmLaserWavelengths,
+        ledWavelengths = ecaldqmLedWavelengths,
+        MGPAGains = ecaldqmMGPAGains,
+        MGPAGainsPN = ecaldqmMGPAGainsPN
     ),
     verbosity = cms.untracked.int32(0)
 )

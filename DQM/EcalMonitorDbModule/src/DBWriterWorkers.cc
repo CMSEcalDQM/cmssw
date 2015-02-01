@@ -50,6 +50,7 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 namespace ecaldqm {
   enum Quality {
@@ -90,17 +91,31 @@ namespace ecaldqm {
     }
   }
 
+  /*static*/
+  void
+  DBWriterWorker::fillDescriptions(edm::ParameterSetDescription& _desc)
+  {
+    _desc.addUntracked<std::vector<std::string> >("runTypes", std::vector<std::string>());
+
+    edm::ParameterSetDescription sourceParameters;
+    edm::ParameterSetDescription sourceNodeParameters;
+    fillMESetDescriptions(sourceNodeParameters);
+    sourceParameters.addNode(edm::ParameterWildcard<edm::ParameterSetDescription>("*", edm::RequireZeroOrMore, false, sourceNodeParameters));
+    _desc.addUntracked("source", sourceParameters);
+  }
+
   void
   DBWriterWorker::retrieveSource(DQMStore::IGetter& _igetter)
   {
     std::string failedPath;
-    for(MESetCollection::iterator sItr(this->source_.begin()); sItr != this->source_.end(); ++sItr){
+    for(MESetCollection::iterator sItr(source_.begin()); sItr != source_.end(); ++sItr){
       if(!sItr->second->retrieve(_igetter, &failedPath)){
         edm::LogError("EcalDQM") << name_ << ": MESet " << sItr->first << "@" << failedPath << " not found";
-        this->active_ = false;
+        active_ = false;
         return;
       }
     }
+    active_ = true;
   }
  
   bool

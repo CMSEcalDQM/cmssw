@@ -2,11 +2,20 @@
 
 #include "DQMServices/Core/interface/DQMStore.h"
 
+#include "DQM/EcalCommon/interface/EcalDQMCommonUtils.h"
+
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+
+#include "Geometry/EcalMapping/interface/EcalMappingRcd.h"
+#include "Geometry/Records/interface/IdealGeometryRecord.h"
+#include "Geometry/Records/interface/CaloGeometryRecord.h"
+#include "Geometry/Records/interface/CaloTopologyRecord.h"
 
 #include "TObjArray.h"
 #include "TPRegexp.h"
@@ -124,6 +133,69 @@ EcalCondDBWriter::~EcalCondDBWriter()
 
   for(unsigned iC(0); iC < nTasks; ++iC)
     delete workers_[iC];
+}
+
+/*static*/
+void
+EcalCondDBWriter::fillDescriptions(edm::ConfigurationDescriptions& _descs)
+{
+  edm::ParameterSetDescription desc;
+
+  desc.addUntracked<std::string>("DBName", "");
+  desc.addUntracked<std::string>("hostName", "");
+  desc.addUntracked<int>("hostPort", 0);
+  desc.addUntracked<std::string>("userName", "");
+  desc.addUntracked<std::string>("password", "");
+  desc.addUntracked<std::string>("location", "");
+  desc.addUntracked<std::string>("runType", "");
+  desc.addUntracked<std::string>("runGeneralTag", "");
+  desc.addUntracked<std::string>("monRunGeneralTag", "");
+  desc.addUntracked<std::vector<std::string> >("inputRootFiles", std::vector<std::string>());
+
+  edm::ParameterSetDescription workerParameters;
+  ecaldqm::DBWriterWorker::fillDescriptions(workerParameters);
+  edm::ParameterSetDescription allWorkers;
+  allWorkers.addNode(edm::ParameterWildcard<edm::ParameterSetDescription>("*", edm::RequireZeroOrMore, false, workerParameters));
+  allWorkers.addUntracked<std::vector<int> >("laserWavelengths", std::vector<int>());
+  allWorkers.addUntracked<std::vector<int> >("ledWavelengths", std::vector<int>());
+  allWorkers.addUntracked<std::vector<int> >("MGPAGains", std::vector<int>());
+  allWorkers.addUntracked<std::vector<int> >("MGPAGainsPN", std::vector<int>());
+  desc.addUntracked("workerParams", allWorkers);
+
+  desc.addUntracked<int>("verbosity", 0);
+
+  _descs.addDefault(desc);
+}
+
+void
+EcalCondDBWriter::endRun(edm::Run const&, edm::EventSetup const& _es)
+{
+  if(!ecaldqm::checkElectronicsMap(false)){
+    // set up electronicsMap in EcalDQMCommonUtils
+    edm::ESHandle<EcalElectronicsMapping> elecMapHandle;
+    _es.get<EcalMappingRcd>().get(elecMapHandle);
+    ecaldqm::setElectronicsMap(elecMapHandle.product());
+  }
+  
+  if(!ecaldqm::checkTrigTowerMap(false)){
+    // set up trigTowerMap in EcalDQMCommonUtils
+    edm::ESHandle<EcalTrigTowerConstituentsMap> ttMapHandle;
+    _es.get<IdealGeometryRecord>().get(ttMapHandle);
+    ecaldqm::setTrigTowerMap(ttMapHandle.product());
+  }
+  
+  if(!ecaldqm::checkGeometry(false)){
+    edm::ESHandle<CaloGeometry> geomHandle;
+    _es.get<CaloGeometryRecord>().get(geomHandle);
+    ecaldqm::setGeometry(geomHandle.product());
+  }
+  
+  if(!ecaldqm::checkTopology(false)){
+    // set up trigTowerMap in EcalDQMCommonUtils
+    edm::ESHandle<CaloTopology> topoHandle;
+    _es.get<CaloTopologyRecord>().get(topoHandle);
+    ecaldqm::setTopology(topoHandle.product());
+  }
 }
 
 void
@@ -258,9 +330,15 @@ EcalCondDBWriter::dqmEndJob(DQMStore::IBooker&, DQMStore::IGetter& _igetter)
   for(unsigned iC(0); iC < nTasks; ++iC){
     if(!getBit(taskList, iC)) continue;
 
-    if(verbosity_ > 1) edm::LogInfo("EcalDQM") << " " << workers_[iC]->getName();
-
-    if(workers_[iC]->isActive() && workers_[iC]->run(db_, monIOV)) setBit(outcome, iC);
+    if(workers_[iC]->isActive()){
+      if(verbosity_ > 1) edm::LogInfo("EcalDQM") << " " << workers_[iC]->getName();
+      if(workers_[iC]->run(db_, monIOV)){
+	edm::LogInfo("EcalDQM") << "  OK";
+	setBit(outcome, iC);
+      }
+      else
+	edm::LogInfo("EcalDQM") << "  Bad quality channel found";
+    }
   }
 
   if(verbosity_ > 0) edm::LogInfo("EcalDQM") << " Done.";

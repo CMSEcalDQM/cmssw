@@ -68,6 +68,8 @@ namespace ecaldqm
   void
   EcalDQMonitor::ecaldqmGetSetupObjects(edm::EventSetup const& _es)
   {
+    // can be placed in CommonUtils
+
     if(!checkElectronicsMap(false)){
       // set up electronicsMap in EcalDQMCommonUtils
       edm::ESHandle<EcalElectronicsMapping> elecMapHandle;

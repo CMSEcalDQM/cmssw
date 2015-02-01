@@ -20,6 +20,8 @@ namespace ecaldqm {
     DBWriterWorker(std::string const&, edm::ParameterSet const&);
     virtual ~DBWriterWorker() {}
 
+    static void fillDescriptions(edm::ParameterSetDescription&);
+
     void retrieveSource(DQMStore::IGetter&);
     virtual bool run(EcalCondDBInterface*, MonRunIOV&) = 0;
 

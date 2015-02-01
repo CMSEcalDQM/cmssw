@@ -12,7 +12,10 @@ class EcalCondDBWriter : public DQMEDHarvester {
   EcalCondDBWriter(edm::ParameterSet const&);
   ~EcalCondDBWriter();
 
+  static void fillDescriptions(edm::ConfigurationDescriptions&);
+
  private:
+  void endRun(edm::Run const&, edm::EventSetup const&) override;
   void dqmEndJob(DQMStore::IBooker&, DQMStore::IGetter&) override;
 
   // DON'T CHANGE - ORDER MATTERS IN DB
