@@ -96,6 +96,7 @@ function synchdir()
 
 REVERSE=false
 TEST=false
+BUILD=false
 
 while [ $# -gt 0 ]; do
     case $1 in
@@ -107,6 +108,10 @@ while [ $# -gt 0 ]; do
             TEST=true
             shift
             ;;
+	-b)
+	    BUILD=true
+	    shift
+	    ;;
         *)
             echo "Unrecognized option $1"
             shift
@@ -168,6 +173,11 @@ for DIR in $DIRS; do
         synchdir $DIR $INSTALLDIR $CMSSW_BASE/src $FLAG
     fi
 done
+
+if [ $REVERSE = "false" -a $BUILD = "true" ]; then
+    cd $CMSSW_BASE/src
+    scram b -j8
+fi
 
 echo "install: $FILES"
 
